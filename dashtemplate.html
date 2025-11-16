@@ -1,171 +1,95 @@
-h<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Route 16 Employee Dashboard</title>
 
-    <!-- Bootstrap -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
 
-    <!-- Plotly JS -->
-   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        /* MAIN RED BRAND COLOR */
+        :root {
+            --brand-red: #B00020;
+        }
+
+        /* HEADER SECTION */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+        }
+
+        .header img {
+            height: 70px;   /* resized logo */
+            margin-right: 15px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;   /* smaller header */
+            font-weight: bold;
+            color: var(--brand-red);
+            margin: 0;
+        }
+
+        /* TAB STYLING */
+        .dash-tabs .tab {
+            color: var(--brand-red) !important;
+        }
+
+        .dash-tabs .tab--selected {
+            border-bottom: 3px solid var(--brand-red) !important;
+            color: var(--brand-red) !important;
+        }
+
+        /* BUTTONS */
+        button, .btn, .dash-button {
+            background-color: var(--brand-red) !important;
+            border-color: var(--brand-red) !important;
+        }
+
+        /* DROPDOWNS */
+        .Select-control {
+            border-color: var(--brand-red) !important;
+        }
+        .Select.is-focused > .Select-control {
+            border-color: var(--brand-red) !important;
+            box-shadow: 0 0 5px var(--brand-red) !important;
+        }
+        .Select-option.is-focused, 
+        .Select-option.is-selected {
+            background-color: var(--brand-red) !important;
+            color: white !important;
+        }
+
+        /* PLOTLY GRAPH COLORS OVERRIDE */
+        .js-plotly-plot .plotly .main-svg {
+            color: var(--brand-red) !important;
+        }
+    </style>
+
 </head>
 
-<body class="bg-light" style="font-family: serif;">
+<body>
 
-  <img src="{{ url_for('static', filename='logo.png') }}" 
-       class="top-right-logo" 
-       style="height: 100px; margin-left: 15px;">
+    <!-- HEADER WITH LOGO (now fixed) -->
+    <div class="header">
+        <img src="/assets/logo.png" alt="Route 16 Logo">
+        <h1>Route 16 Employee Dashboard</h1>
+    </div>
 
-  <div class="container-fluid py-4">
-    <h1 class="mb-4 text-center" 
-        style="color: #b40123; font-weight: 800; font-family: Arial, Helvetica, sans-serif; font-size: 5rem;">
-      Route 16 Employee Dashboard
-    </h1>
-  </div>
+    <!-- Dash App Will Render Here -->
+    {%app_entry%}
+
+    <footer>
+        {%config%}
+        {%scripts%}
+        {%renderer%}
+    </footer>
 
 </body>
-
-
-      <!-- Tabs -->
-      <ul class="nav nav-tabs mb-3">
-        <li class="nav-item">
-          <a
-            class="nav-link {% if view == 'worker' %}active{% endif %}"
-            href="{{ url_for('worker_dashboard', employee=selected_employee, wave=selected_wave) }}"
-          >
-            Worker View
-          </a>
-        </li>
-        <li class="nav-item">
-          <a
-            class="nav-link {% if view == 'supervisor' %}active{% endif %}"
-            href="{{ url_for('supervisor_dashboard', supervisor=selected_supervisor, wave=selected_wave) }}"
-          >
-            Supervisor View
-          </a>
-        </li>
-      </ul>
-
-      {% if view == 'worker' %}
-      <!-- ============= WORKER VIEW ============= -->
-
-      <form method="get" action="{{ url_for('worker_dashboard') }}" class="mb-4">
-        <div class="row g-3 justify-content-center">
-          <div class="col-md-4">
-            <label class="form-label">Employee</label>
-            <select name="employee" class="form-select">
-              {% for name in employee_names %}
-              <option
-                value="{{ name }}"
-                {% if name == selected_employee %}selected{% endif %}
-              >
-                {{ name }}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="col-md-3">
-            <label class="form-label">Wave (for Skill Profile)</label>
-            <select name="wave" class="form-select">
-              {% for w in wave_labels %}
-              <option value="{{ w }}" {% if w == selected_wave %}selected{% endif %}>
-                {{ w }}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Update</button>
-          </div>
-        </div>
-      </form>
-
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <div class="card shadow-sm">
-            <div class="card-header">Employee Skill Profile</div>
-            <div class="card-body">
-              {{ emp_radar_div|safe }}
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 mt-3 mt-md-0">
-          <div class="card shadow-sm">
-            <div class="card-header">Employee Average Skill Score Over Waves</div>
-            <div class="card-body">
-              {{ emp_ts_div|safe }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {% elif view == 'supervisor' %}
-      <!-- ============= SUPERVISOR VIEW ============= -->
-
-      <form method="get" action="{{ url_for('supervisor_dashboard') }}" class="mb-4">
-        <div class="row g-3 justify-content-center">
-          <div class="col-md-4">
-            <label class="form-label">Supervisor</label>
-            <select name="supervisor" class="form-select">
-              {% for sup in supervisor_names %}
-              <option
-                value="{{ sup }}"
-                {% if sup == selected_supervisor %}selected{% endif %}
-              >
-                {{ sup }}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="col-md-3">
-            <label class="form-label">Wave (for Skill Profile)</label>
-            <select name="wave" class="form-select">
-              {% for w in wave_labels %}
-              <option value="{{ w }}" {% if w == selected_wave %}selected{% endif %}>
-                {{ w }}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Update</button>
-          </div>
-        </div>
-      </form>
-
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <div class="card shadow-sm">
-            <div class="card-header">
-              Supervisor View – Shaded Radar (All Direct Reports)
-            </div>
-            <div class="card-body">
-              {{ sup_radar_div|safe }}
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 mt-3 mt-md-0">
-          <div class="card shadow-sm">
-            <div class="card-header">
-              Supervisor View – Average Scores Over Waves
-            </div>
-            <div class="card-body">
-              {{ sup_ts_div|safe }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {% endif %}
-    </div>
-  </body>
 </html>
