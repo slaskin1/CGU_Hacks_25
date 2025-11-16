@@ -51,13 +51,14 @@
 
   <body class="bg-light" style="font-family: serif;">
 
-    <!-- FIXED: removed rogue “h”, logo loads from Flask static folder -->
-    <img src="{{ url_for('static', filename='logo.png') }}" 
-         class="top-right-logo" 
-         style="height: 80px; margin-left: 15px;">
-
-    <div class="container-fluid py-4">
-      <h1 class="mb-4 text-center dashboard-title">
+    <!-- HEADER ROW: logo + title inline -->
+    <div class="container-fluid py-4 d-flex align-items-center justify-content-center">
+      <img 
+        src="{{ url_for('static', filename='logo.png') }}" 
+        alt="Route 16 Logo"
+        style="height: 80px; margin-right: 20px;"
+      >
+      <h1 class="mb-0 dashboard-title">
         Route 16 Employee Dashboard
       </h1>
     </div>

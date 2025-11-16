@@ -75,12 +75,23 @@ def get_record_for_employee_wave(df, name, wave_label):
         sub = sub.sort_values("Entry Date and Time")
     return sub.iloc[-1]
 
-# RED BRAND COLOR
+# BRAND COLORS
 RED = "#b40123"
 RED_LIGHT = "rgba(180,1,35,0.2)"
-RED_LIGHTER = "rgba(180,1,35,0.15)"
 
-# ---------- FIGURE FUNCTIONS (UPDATED WITH RED THEME) ----------
+# palette for supervisor view (6 distinct colors)
+SUP_COLORS = [
+    "#1f77b4",  # blue
+    "#ff7f0e",  # orange
+    "#2ca02c",  # green
+    "#9467bd",  # purple
+    "#8c564b",  # brown
+    "#17becf",  # teal
+]
+
+# ---------- FIGURE FUNCTIONS ----------
+
+# ===== WORKER VIEW (RED THEME) =====
 
 def employee_radar_figure(row, wave_label):
     categories = list(METRIC_COLS.values())
@@ -153,6 +164,8 @@ def employee_timeseries_figure(df, name):
     return fig
 
 
+# ===== SUPERVISOR VIEW (MULTI-COLOR) =====
+
 def supervisor_radar_figure(df, supervisor, wave_label):
     sub = df[(df["Supervisor"] == supervisor) & (df["Wave"] == wave_label)].copy()
     if sub.empty:
@@ -169,7 +182,8 @@ def supervisor_radar_figure(df, supervisor, wave_label):
 
     fig = go.Figure()
 
-    for _, row in latest.iterrows():
+    for i, (_, row) in enumerate(latest.iterrows()):
+        color = SUP_COLORS[i % len(SUP_COLORS)]
         values = [row[col] for col in METRIC_COLS.keys()]
         values_closed = values + [values[0]]
 
@@ -178,10 +192,10 @@ def supervisor_radar_figure(df, supervisor, wave_label):
                 r=values_closed,
                 theta=categories_closed,
                 fill="toself",
-                fillcolor=RED_LIGHTER,
-                line_color=RED,
-                marker_color=RED,
-                opacity=0.35,
+                fillcolor=color,      # different fill per employee
+                line_color=color,
+                marker_color=color,
+                opacity=0.3,
                 name=row.get("Name", "Employee"),
             )
         )
@@ -191,7 +205,7 @@ def supervisor_radar_figure(df, supervisor, wave_label):
         polar=dict(radialaxis=dict(visible=True, range=[1, 5])),
         showlegend=True,
         margin=dict(l=40, r=40, t=60, b=40),
-        font=dict(color=RED),
+        font=dict(color=RED),   # keep titles/labels on-brand
     )
     return fig
 
@@ -205,7 +219,8 @@ def supervisor_timeseries_figure(df, supervisor):
     fig = go.Figure()
     x_values = [str(w) for w in wave_labels]
 
-    for emp_name in sorted(sup_df["Name"].dropna().unique().tolist()):
+    for i, emp_name in enumerate(sorted(sup_df["Name"].dropna().unique().tolist())):
+        color = SUP_COLORS[i % len(SUP_COLORS)]
         y_values = []
         for wave in wave_labels:
             sub = sup_df[(sup_df["Name"] == emp_name) & (sup_df["Wave"] == wave)]
@@ -222,8 +237,8 @@ def supervisor_timeseries_figure(df, supervisor):
                 mode="lines+markers",
                 name=emp_name,
                 connectgaps=False,
-                line=dict(color=RED, width=2),
-                marker=dict(color=RED),
+                line=dict(color=color, width=2),
+                marker=dict(color=color),
             )
         )
 
@@ -233,7 +248,7 @@ def supervisor_timeseries_figure(df, supervisor):
         yaxis_title="Average of All Metrics (1–5)",
         yaxis=dict(range=[0.5, 5]),
         legend_title="Employee",
-        font=dict(color=RED),
+        font=dict(color=RED),   # titles/axes still red
     )
     return fig
 
