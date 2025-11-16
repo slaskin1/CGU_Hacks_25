@@ -34,7 +34,6 @@ if "Entry Date and Time" in df.columns:
 # ---------- HELPERS FOR WAVES ----------
 
 def sort_waves(waves):
-    """Sort labels like 'Wave 1', 'Wave 2', ..., numerically."""
     def key_fn(w):
         s = str(w)
         try:
@@ -66,7 +65,6 @@ for col in METRIC_COLS.keys():
 employee_names = sorted(df["Name"].dropna().unique().tolist())
 supervisor_names = sorted(df["Supervisor"].dropna().unique().tolist())
 
-
 # ---------- CORE HELPERS ----------
 
 def get_record_for_employee_wave(df, name, wave_label):
@@ -77,6 +75,12 @@ def get_record_for_employee_wave(df, name, wave_label):
         sub = sub.sort_values("Entry Date and Time")
     return sub.iloc[-1]
 
+# RED BRAND COLOR
+RED = "#b40123"
+RED_LIGHT = "rgba(180,1,35,0.2)"
+RED_LIGHTER = "rgba(180,1,35,0.15)"
+
+# ---------- FIGURE FUNCTIONS (UPDATED WITH RED THEME) ----------
 
 def employee_radar_figure(row, wave_label):
     categories = list(METRIC_COLS.values())
@@ -91,34 +95,35 @@ def employee_radar_figure(row, wave_label):
             r=values_closed,
             theta=categories_closed,
             fill="toself",
+            fillcolor=RED_LIGHT,
+            line_color=RED,
+            marker_color=RED,
             name=row.get("Name", "Employee"),
         )
     )
+
     fig.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[1, 5])),
+        polar=dict(
+            radialaxis=dict(visible=True, range=[1, 5], gridcolor="#ddd"),
+            angularaxis=dict(gridcolor="#ddd"),
+        ),
+        font=dict(color=RED),
+        title=f"Skill Profile – {row.get('Name', '')} – {wave_label}",
         showlegend=False,
         margin=dict(l=40, r=40, t=60, b=40),
-        title=f"Skill Profile – {row.get('Name', '')} – {wave_label}",
     )
     return fig
 
 
 def employee_timeseries_figure(df, name):
-    """
-    ONE employee, ALL waves.
-    For each wave:
-      - filter that employee & wave
-      - average the 1–5 metrics
-    """
     metric_cols = list(METRIC_COLS.keys())
     y_values = []
 
     for wave in wave_labels:
         sub = df[(df["Name"] == name) & (df["Wave"] == wave)]
         if sub.empty:
-            y_values.append(None)  # gap
+            y_values.append(None)
         else:
-            # avg over rows for that employee+wave
             avg_per_row = sub[metric_cols].mean(axis=1)
             y_values.append(avg_per_row.mean())
 
@@ -132,21 +137,23 @@ def employee_timeseries_figure(df, name):
             mode="lines+markers",
             name=f"{name} avg score",
             connectgaps=False,
-            marker=dict(size=8),
+            marker=dict(size=8, color=RED),
+            line=dict(color=RED, width=3),
         )
     )
+
     fig.update_layout(
         title=f"Average Skill Score Over Time – {name}",
         xaxis_title="Wave",
         yaxis_title="Average of All Metrics (1–5)",
         yaxis=dict(range=[0.5, 5]),
         hovermode="x unified",
+        font=dict(color=RED),
     )
     return fig
 
 
 def supervisor_radar_figure(df, supervisor, wave_label):
-    """Supervisor radar for ONE wave."""
     sub = df[(df["Supervisor"] == supervisor) & (df["Wave"] == wave_label)].copy()
     if sub.empty:
         return go.Figure()
@@ -161,6 +168,7 @@ def supervisor_radar_figure(df, supervisor, wave_label):
     categories_closed = categories + [categories[0]]
 
     fig = go.Figure()
+
     for _, row in latest.iterrows():
         values = [row[col] for col in METRIC_COLS.keys()]
         values_closed = values + [values[0]]
@@ -170,28 +178,25 @@ def supervisor_radar_figure(df, supervisor, wave_label):
                 r=values_closed,
                 theta=categories_closed,
                 fill="toself",
-                opacity=0.25,
+                fillcolor=RED_LIGHTER,
+                line_color=RED,
+                marker_color=RED,
+                opacity=0.35,
                 name=row.get("Name", "Employee"),
-                mode="lines",
             )
         )
+
     fig.update_layout(
         title=f"Employees under {supervisor} – {wave_label}",
         polar=dict(radialaxis=dict(visible=True, range=[1, 5])),
         showlegend=True,
         margin=dict(l=40, r=40, t=60, b=40),
+        font=dict(color=RED),
     )
     return fig
 
 
 def supervisor_timeseries_figure(df, supervisor):
-    """
-    ALL employees under this supervisor, ALL waves.
-    For each employee & wave:
-      - filter rows
-      - average 1–5 metrics
-      - build one line per employee
-    """
     metric_cols = list(METRIC_COLS.keys())
     sup_df = df[df["Supervisor"] == supervisor].copy()
     if sup_df.empty:
@@ -217,6 +222,8 @@ def supervisor_timeseries_figure(df, supervisor):
                 mode="lines+markers",
                 name=emp_name,
                 connectgaps=False,
+                line=dict(color=RED, width=2),
+                marker=dict(color=RED),
             )
         )
 
@@ -226,6 +233,7 @@ def supervisor_timeseries_figure(df, supervisor):
         yaxis_title="Average of All Metrics (1–5)",
         yaxis=dict(range=[0.5, 5]),
         legend_title="Employee",
+        font=dict(color=RED),
     )
     return fig
 
@@ -241,7 +249,6 @@ def worker_dashboard():
     selected_employee = request.args.get("employee", default_employee)
     selected_wave = request.args.get("wave", default_wave)
 
-    # Radar: employee + wave
     row = get_record_for_employee_wave(df, selected_employee, selected_wave)
     if row is not None:
         emp_radar_fig = employee_radar_figure(row, selected_wave)
@@ -249,7 +256,6 @@ def worker_dashboard():
     else:
         emp_radar_div = "<p>No data for selected employee/wave.</p>"
 
-    # Time-series: employee across ALL waves (ignores wave filter)
     emp_ts_fig = employee_timeseries_figure(df, selected_employee)
     emp_ts_div = plot(emp_ts_fig, output_type="div", include_plotlyjs=False)
 
@@ -279,11 +285,9 @@ def supervisor_dashboard():
     selected_supervisor = request.args.get("supervisor", default_supervisor)
     selected_wave = request.args.get("wave", default_wave)
 
-    # Radar: supervisor + wave
     sup_radar_fig = supervisor_radar_figure(df, selected_supervisor, selected_wave)
     sup_radar_div = plot(sup_radar_fig, output_type="div", include_plotlyjs=False)
 
-    # Time-series: ALL employees under this supervisor, ALL waves
     sup_ts_fig = supervisor_timeseries_figure(df, selected_supervisor)
     sup_ts_div = plot(sup_ts_fig, output_type="div", include_plotlyjs=False)
 
