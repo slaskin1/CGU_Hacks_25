@@ -10,14 +10,23 @@ h<!doctype html>
     />
 
     <!-- Plotly JS -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  </head>
-  <img src="logo.png" 
-     class="top-right-logo" style="height: 200px; margin-left: 15px; margin-top: 15px">
-  <body class="bg-light" front-family: serif;>
-    <div class="container-fluid py-4">
-      <h1 class="mb-4 text-center" style="color: #b40123; font-weight: 800; font-family: Arial, Helvetica, sans-serif;">
-      Route 16 Employee Dashboard  </h1>
+   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body class="bg-light" style="font-family: serif;">
+
+  <img src="{{ url_for('static', filename='logo.png') }}" 
+       class="top-right-logo" 
+       style="height: 100px; margin-left: 15px;">
+
+  <div class="container-fluid py-4">
+    <h1 class="mb-4 text-center" 
+        style="color: #b40123; font-weight: 800; font-family: Arial, Helvetica, sans-serif; font-size: 5rem;">
+      Route 16 Employee Dashboard
+    </h1>
+  </div>
+
+</body>
 
 
       <!-- Tabs -->
